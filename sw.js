@@ -1,7 +1,7 @@
 /* Barcode Generator - TekiDeki
    Cache first, so the app opens with the internet off. Bump VERSION on every
    deploy: the old cache is dropped on activate. */
-const VERSION = 'barcode-v1';
+const VERSION = 'barcode-v2-sheet';
 const SHELL = [
   './',
   'index.html',

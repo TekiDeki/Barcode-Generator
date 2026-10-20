@@ -390,12 +390,9 @@
 
   document.getElementById('btn-print').addEventListener('click', function () {
     if (!current.good.length) return;
-    var sheet = document.getElementById('sheet') || (function () {
-      var node = document.createElement('div');
-      node.id = 'sheet';
-      document.body.appendChild(node);
-      return node;
-    }());
+    var sheet = document.getElementById('sheet');
+    var view = document.getElementById('sheetview');
+    view.hidden = false;
 
     var gap = clamp(state.gap, 0, 20);
     var labelW = clamp(state.labelw, 20, 190);
@@ -418,7 +415,10 @@
         drawing.markup + '</div>';
     }).join('');
 
-    window.print();
+    // The dialog opens over the page, so the page itself is shown first: what
+    // you are about to print is on screen before the printer is asked.
+    view.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    setTimeout(function () { window.print(); }, 120);
   });
 
   /* ----------------------------------------------------------------- wire */

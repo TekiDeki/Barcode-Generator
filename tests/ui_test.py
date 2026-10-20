@@ -148,8 +148,10 @@ def main() -> int:
         page.wait_for_timeout(300)
         labels = page.locator("#sheet .label").count()
         check("print sheet gets one label per code", labels == 3, str(labels))
+        page.wait_for_timeout(700)
+        check("the sheet is shown on screen before printing", page.locator("#sheetview").is_visible())
         page.emulate_media(media="print")
-        check("sheet is visible when printing", page.locator("#sheet").is_visible())
+        check("the sheet survives into the print stylesheet", page.locator("#sheet").is_visible())
         check("the app chrome steps aside when printing", not page.locator(".panel").is_visible())
         page.emulate_media(media="screen")
 

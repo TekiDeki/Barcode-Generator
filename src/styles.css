@@ -104,6 +104,18 @@ html[data-theme="dark"] .status.bad{color:#ff9b90}
 .foot{border-top:1px solid var(--line);margin-top:10px;padding:16px 0 26px;color:var(--muted);font-size:13.5px}
 .foot a{color:var(--accent)}
 
+/* the page that will print, shown on screen before the dialog opens */
+.sheet-view:not([hidden]) #sheet{display:grid;gap:0;grid-auto-rows:min-content}
+.sheet-view{margin-top:16px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface-2);padding:12px}
+.sheet-title{margin:0 0 10px;font-size:12.5px;font-weight:600;letter-spacing:.02em;text-transform:uppercase;color:var(--muted)}
+.sheet-scaler{
+  --s:.60;
+  width:calc(190mm * var(--s));height:calc(277mm * var(--s));
+  overflow:hidden;background:#fff;border:1px solid #c9d2dc;
+  box-shadow:0 6px 18px -10px rgba(0,0,0,.4);
+}
+.sheet-scaler #sheet{transform:scale(var(--s));transform-origin:top left}
+
 /* the printed page */
 #sheet{display:none}
 #sheet .label{
@@ -115,6 +127,7 @@ html[data-theme="dark"] .status.bad{color:#ff9b90}
 
 @media (max-width:900px){
   .work{grid-template-columns:minmax(0,1fr)}
+  .sheet-scaler{--s:.46}
   .preview{position:static}
   .about-grid{grid-template-columns:minmax(0,1fr)}
 }
@@ -126,6 +139,10 @@ html[data-theme="dark"] .status.bad{color:#ff9b90}
   @page{size:A4;margin:10mm}
   body{background:#fff}
   .topbar,.intro,.panel,.preview,.about,.foot,.skip{display:none !important}
+  .sheet-view{display:block !important;border:0;padding:0;margin:0;background:none}
+  .sheet-title{display:none}
+  .sheet-scaler{--s:1;width:auto;height:auto;overflow:visible;border:0;box-shadow:none}
+  .sheet-scaler #sheet{transform:none}
   #sheet{
     display:grid;justify-content:start;align-content:start;
     grid-auto-rows:min-content;gap:0;
