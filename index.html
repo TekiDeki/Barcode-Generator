@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<html lang="en" data-version="1.0.0">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#0f6674">
+<title>Barcode Generator · EAN, UPC, Code 128, printed in your browser</title>
+<meta name="description" content="Make EAN-13, EAN-8, UPC-A, ITF-14, Code 128 and Code 39 barcodes as vector SVG or sharp PNG, then print a whole sheet of labels. No account, no upload, works offline.">
+<meta name="author" content="Kristian Mario Miskovic (TekiDeki)">
+<meta name="robots" content="index, follow">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="favicon.ico" sizes="32x32">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+:root{
+  --bg:#f5f7f9; --surface:#ffffff; --surface-2:#eef2f6; --ink:#101820; --muted:#5c6977;
+  --line:#dbe1e8; --accent:#0f6674; --accent-2:#0b4f5a; --on-accent:#ffffff;
+  --shadow:0 1px 2px rgba(16,24,32,.06),0 12px 30px -18px rgba(16,24,32,.35);
+  --r:14px; --r-sm:9px;
+  --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+}
+html[data-theme="dark"]{
+  --bg:#0b0f14; --surface:#121a23; --surface-2:#18222d; --ink:#e9eef5; --muted:#9aa8b8;
+  --line:#26323f; --accent:#2dd4bf; --accent-2:#5eead4; --on-accent:#04211c;
+  --shadow:0 1px 2px rgba(0,0,0,.5),0 18px 40px -24px rgba(0,0,0,.9);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+  font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.skip{position:absolute;left:-999px}
+.skip:focus{left:12px;top:12px;z-index:20;background:var(--surface);padding:10px 14px;border-radius:8px}
+
+/* top bar */
+.topbar{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--bg) 86%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.topbar-in{display:flex;align-items:center;justify-content:space-between;gap:12px;height:62px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);font-weight:650;letter-spacing:-.01em}
+.mark{width:30px;height:30px;display:grid;place-items:center;border-radius:8px;background:var(--accent);color:var(--on-accent)}
+.mark svg{width:20px;height:20px;fill:currentColor}
+.brand-dot{color:var(--accent)}
+.tools{display:flex;align-items:center;gap:8px}
+.select,.iconbtn{height:36px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:9px;font:inherit}
+.select{padding:0 8px}
+.iconbtn{width:36px;display:grid;place-items:center;cursor:pointer}
+.iconbtn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round}
+html[data-theme="dark"] .moon{display:none}
+html[data-theme="light"] .sun{display:none}
+
+/* intro */
+.intro{padding:38px 0 10px;max-width:760px}
+h1{font-size:clamp(26px,3.4vw,38px);line-height:1.15;letter-spacing:-.02em;margin:0 0 10px}
+.lede{margin:0;color:var(--muted);font-size:16.5px}
+
+/* work area */
+.work{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,420px);gap:22px;padding:22px 0 10px;align-items:start}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;box-shadow:var(--shadow)}
+.types{border:0;padding:0;margin:0 0 14px}
+.types legend,.field>span{font-size:12.5px;font-weight:600;letter-spacing:.02em;text-transform:uppercase;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{
+  font:600 13.5px/1 var(--mono);padding:9px 11px;border-radius:8px;cursor:pointer;
+  border:1px solid var(--line);background:var(--surface-2);color:var(--ink);
+}
+.chip:hover{border-color:color-mix(in srgb,var(--accent) 45%,var(--line))}
+.chip.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.field{display:block;margin:0 0 12px}
+.field>span{display:block;margin-bottom:6px}
+.field input,.field textarea{
+  width:100%;font:inherit;color:var(--ink);background:var(--surface-2);
+  border:1px solid var(--line);border-radius:var(--r-sm);padding:10px 12px;
+}
+.field textarea{font-family:var(--mono);font-size:14.5px;resize:vertical;min-height:64px}
+.field input:focus,.field textarea:focus{outline:2px solid color-mix(in srgb,var(--accent) 55%,transparent);outline-offset:1px;border-color:var(--accent)}
+.row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.field.small{margin-bottom:8px}
+.field.small input{font-family:var(--mono);font-size:14px;padding:8px 9px}
+.hint{margin:2px 0 14px;color:var(--muted);font-size:13.5px}
+.check{display:flex;align-items:center;gap:8px;font-size:14.5px;margin:4px 0 10px;cursor:pointer}
+.check input{width:17px;height:17px;accent-color:var(--accent)}
+.sheet{border-top:1px solid var(--line);padding-top:10px;margin-top:6px}
+.sheet summary{cursor:pointer;font-weight:600;font-size:14.5px}
+.sheet[open] summary{margin-bottom:10px}
+
+/* preview */
+.preview{position:sticky;top:80px}
+.paper{
+  background:#fff;color:#101820;border:1px solid var(--line);border-radius:var(--r);
+  padding:20px 18px 14px;box-shadow:var(--shadow);min-height:170px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+}
+.svgbox{width:100%;display:flex;justify-content:center}
+.svgbox svg{width:100%;height:auto;max-height:230px;display:block}
+.caption{margin:0;font-family:var(--mono);font-size:12.5px;color:#5c6977;text-align:center;min-height:18px}
+.status{margin:10px 2px 0;font-size:13.5px;color:var(--muted);min-height:20px}
+.status.bad{color:#b3261e}
+html[data-theme="dark"] .status.bad{color:#ff9b90}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.btn{
+  font:600 14px/1 var(--sans);padding:11px 14px;border-radius:10px;cursor:pointer;
+  border:1px solid var(--line);background:var(--surface);color:var(--ink);
+}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.note{margin:10px 2px 0;color:var(--muted);font-size:12.5px}
+
+/* about + foot */
+.about{padding:34px 0 20px;border-top:1px solid var(--line);margin-top:28px}
+.about h2{font-size:20px;margin:0 0 14px;letter-spacing:-.01em}
+.about-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.about h3{margin:0 0 4px;font-size:15px}
+.about p{margin:0;color:var(--muted);font-size:14.5px}
+.foot{border-top:1px solid var(--line);margin-top:10px;padding:16px 0 26px;color:var(--muted);font-size:13.5px}
+.foot a{color:var(--accent)}
+
+/* the printed page */
+#sheet{display:none}
+#sheet .label{
+  box-sizing:border-box;overflow:hidden;background:#fff;color:#000;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+}
+#sheet .label svg{display:block;max-width:100%;height:auto}
+#sheet .label .num{font-family:var(--mono);color:#000;line-height:1.1;text-align:center;margin-top:1mm}
+
+@media (max-width:900px){
+  .work{grid-template-columns:minmax(0,1fr)}
+  .preview{position:static}
+  .about-grid{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:520px){
+  .row{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .actions .btn{flex:1 1 45%}
+}
+@media print{
+  @page{size:A4;margin:10mm}
+  body{background:#fff}
+  .topbar,.intro,.panel,.preview,.about,.foot,.skip{display:none !important}
+  #sheet{
+    display:grid;justify-content:start;align-content:start;
+    grid-auto-rows:min-content;gap:0;
+  }
+  #sheet .label{page-break-inside:avoid}
+  .wrap{padding:0;max-width:none}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none !important;transition:none !important}
+}
+</style>
+<script>
+/* Paint the stored theme before the body exists, so a reload never flashes. */
+(function () {
+  try {
+    var saved = localStorage.getItem('barcode-generator.theme');
+    var dark = saved === 'dark' || (!saved && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+}());
+</script>
+</head>
+<body>
+
+<a class="skip" href="#main" data-i18n="skip">Skip to content</a>
+
+<header class="topbar">
+  <div class="wrap topbar-in">
+    <a class="brand" href="#main">
+      <span class="mark" aria-hidden="true"><svg viewBox="0 0 32 32"><rect x="3" y="4" width="3" height="24"/><rect x="8" y="4" width="1.6" height="24"/><rect x="12" y="4" width="4.6" height="24"/><rect x="19" y="4" width="1.6" height="24"/><rect x="23" y="4" width="2.6" height="24"/><rect x="27.4" y="4" width="1.6" height="24"/></svg></span>
+      <span class="brand-text">Barcode<span class="brand-dot">.</span>Generator</span>
+    </a>
+    <div class="tools">
+      <label class="sr" for="lang" data-i18n="language">Language</label>
+      <select id="lang" class="select">
+        <option value="en">EN</option>
+        <option value="ro">RO</option>
+        <option value="sr-latn">SR</option>
+        <option value="sr-cyrl">SR ћир</option>
+      </select>
+      <button id="theme" class="iconbtn" type="button" data-i18n-aria-label="theme" aria-label="Switch theme">
+        <svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.6v2.2M12 19.2v2.2M4.2 12H2M22 12h-2.2M6 6l1.6 1.6M16.4 16.4L18 18M18 6l-1.6 1.6M7.6 16.4L6 18"/></svg>
+        <svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.4A8.4 8.4 0 0 1 9.6 4a8.4 8.4 0 1 0 10.4 10.4z"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="main" class="wrap">
+
+  <section class="intro">
+    <h1 data-i18n="h1">Barcodes that print clean and never phone home</h1>
+    <p class="lede" data-i18n="lede">Type or paste your codes, pick the symbology, and take vector SVG, a sharp PNG, or a full sheet of labels. Everything is drawn in this tab, so nothing is uploaded and the page keeps working with the internet off.</p>
+  </section>
+
+  <div class="work">
+
+    <form class="panel" id="form" autocomplete="off">
+      <fieldset class="types">
+        <legend data-i18n="typeLegend">Symbology</legend>
+        <div class="chips" id="types">
+          <button type="button" class="chip on" data-type="ean13">EAN-13</button>
+          <button type="button" class="chip" data-type="ean8">EAN-8</button>
+          <button type="button" class="chip" data-type="upca">UPC-A</button>
+          <button type="button" class="chip" data-type="code128">Code 128</button>
+          <button type="button" class="chip" data-type="code39">Code 39</button>
+          <button type="button" class="chip" data-type="itf14">ITF-14</button>
+        </div>
+      </fieldset>
+
+      <label class="field">
+        <span data-i18n="codesLabel">Codes, one per line</span>
+        <textarea id="codes" rows="2" spellcheck="false" data-i18n-placeholder="codesPlaceholder" placeholder="4006381333931"></textarea>
+      </label>
+      <p class="hint" id="hint" data-i18n="hintEan13">13 digits. The last one is the check digit, and it is filled in for you when you type 12.</p>
+
+      <div class="row">
+        <label class="field small">
+          <span data-i18n="barWidth">Bar width, mm</span>
+          <input id="module" type="number" min="0.19" max="1" step="0.01" value="0.33">
+        </label>
+        <label class="field small">
+          <span data-i18n="barHeight">Height, mm</span>
+          <input id="height" type="number" min="5" max="80" step="1" value="18">
+        </label>
+        <label class="field small">
+          <span data-i18n="textSize">Text, pt</span>
+          <input id="textsize" type="number" min="4" max="20" step="0.5" value="9">
+        </label>
+      </div>
+
+      <label class="check"><input id="showtext" type="checkbox" checked> <span data-i18n="showText">Print the numbers under the bars</span></label>
+
+      <details class="sheet">
+        <summary data-i18n="sheetSummary">Sheet of labels</summary>
+        <div class="row">
+          <label class="field small">
+            <span data-i18n="labelWidth">Label width, mm</span>
+            <input id="labelw" type="number" min="20" max="190" step="1" value="63.5">
+          </label>
+          <label class="field small">
+            <span data-i18n="labelHeight">Label height, mm</span>
+            <input id="labelh" type="number" min="15" max="100" step="1" value="30">
+          </label>
+          <label class="field small">
+            <span data-i18n="gap">Gap, mm</span>
+            <input id="gap" type="number" min="0" max="20" step="0.5" value="3">
+          </label>
+        </div>
+        <p class="hint" id="sheetHint" data-i18n="sheetHint">A4 page, as many labels per row as fit. The bars scale to the label.</p>
+      </details>
+    </form>
+
+    <section class="preview" aria-live="polite">
+      <div class="paper">
+        <div id="svgbox" class="svgbox"></div>
+        <p class="caption" id="caption"></p>
+      </div>
+      <p class="status" id="status"></p>
+      <div class="actions">
+        <button id="btn-svg" class="btn" type="button" data-i18n="downloadSvg">SVG</button>
+        <button id="btn-png" class="btn" type="button" data-i18n="downloadPng">PNG</button>
+        <button id="btn-zip" class="btn" type="button" data-i18n="downloadAll">All as ZIP</button>
+        <button id="btn-print" class="btn primary" type="button" data-i18n="printSheet">Print sheet</button>
+      </div>
+      <p class="note" data-i18n="printNote">Print at 100% scale, with "fit to page" switched off, or the bars will not measure right.</p>
+    </section>
+  </div>
+
+  <section class="about">
+    <h2 data-i18n="aboutTitle">Why this one is different</h2>
+    <div class="about-grid">
+      <div>
+        <h3 data-i18n="about1Title">Nothing leaves the tab</h3>
+        <p data-i18n="about1Body">The bars are computed and drawn by this page. No server sees your product codes, and the tool keeps working with the network off.</p>
+      </div>
+      <div>
+        <h3 data-i18n="about2Title">Vector first</h3>
+        <p data-i18n="about2Body">SVG for a printer, PNG at 300 or 600 dpi for a screen. Both keep the module width you asked for, so a scanner reads them at the size you print.</p>
+      </div>
+      <div>
+        <h3 data-i18n="about3Title">Sheets, not one at a time</h3>
+        <p data-i18n="about3Body">Paste a list and print a page of labels with the numbers under each code. Retail units, cartons, shelves and assets, all on one sheet.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <p><span data-i18n="footerFree">Free, no account, no tracking.</span> <a href="https://freehtml.dev">freehtml.dev</a> · <a href="https://github.com/TekiDeki/Barcode-Generator">GitHub</a></p>
+  </div>
+</footer>
+
+<script>
+/* Barcode Generator - TekiDeki
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * The encoders. Every function here turns a typed value into one string of
+ * modules: 1 is a bar, 0 is a space. Nothing draws, nothing touches the page,
+ * so the whole file can be tested in Node without a browser.
+ *
+ * Six symbologies, chosen because they cover what people actually print:
+ * EAN-13 and UPC-A for retail units, EAN-8 for small packages, ITF-14 for
+ * cartons, Code 128 for shipping and assets, Code 39 for labels that must stay
+ * readable when a printer smears them.
+ */
+(function (root, factory) {
+  var api = factory();
+  if (typeof module === 'object' && module.exports) module.exports = api;
+  else root.Barcode = api;
+}(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  'use strict';
+
+  /* ---------------------------------------------------------------- tables */
+
+  // EAN and UPC: seven modules per digit, three alphabets.
+  var L = ['0001101', '0011001', '0010011', '0111101', '0100011',
+           '0110001', '0101111', '0111011', '0110111', '0001011'];
+  var R = L.map(function (s) {
+    return s.replace(/0/g, 'x').replace(/1/g, '0').replace(/x/g, '1');
+  });
+  var G = R.map(function (s) { return s.split('').reverse().join(''); });
+
+  // Which half of an EAN-13 uses the G alphabet, by the leading digit.
+  var PARITY = ['LLLLLL', 'LLGLGG', 'LLGGLG', 'LLGGGL', 'LGLLGG',
+                'LGGLLG', 'LGGGLL', 'LGLGLG', 'LGLGGL', 'LGGLGL'];
+
+  // Code 128: element widths, bars and spaces alternating, starting with a bar.
+  // Values 0 to 102 are the data symbols, 103 to 105 the three start codes,
+  // 106 is the stop pattern and is two modules longer than the rest.
+  var C128 = ['212222', '222122', '222221', '121223', '121322', '131222',
+    '122213', '122312', '132212', '221213', '221312', '231212', '112232',
+    '122132', '122231', '113222', '123122', '123221', '223211', '221132',
+    '221231', '213212', '223112', '312131', '311222', '321122', '321221',
+    '312212', '322112', '322211', '212123', '212321', '232121', '111323',
+    '131123', '131321', '112313', '132113', '132311', '211313', '231113',
+    '231311', '112133', '112331', '132131', '113123', '113321', '133121',
+    '313121', '211331', '231131', '213113', '213311', '213131', '311123',
+    '311321', '331121', '312113', '312311', '332111', '314111', '221411',
+    '431111', '111224', '111422', '121124', '121421', '141122', '141221',
+    '112214', '112412', '122114', '122411', '142112', '142211', '241211',
+    '221114', '413111', '241112', '134111', '111242', '121142', '121241',
+    '114212', '124112', '124211', '411212', '421112', '421211', '212141',
+    '214121', '412121', '111143', '111341', '131141', '114113', '114311',
+    '411113', '411311', '113141', '114131', '311141', '411131', '211412',
+    '211214', '211232', '2331112'];
+
+  var START_A = 103, START_B = 104, START_C = 105, STOP = 106;
+
+  // Code 39: nine elements per character, three of them wide.
+  var C39 = {
+    '0': '000110100', '1': '100100001', '2': '001100001', '3': '101100000',
+    '4': '000110001', '5': '100110000', '6': '001110000', '7': '000100101',
+    '8': '100100100', '9': '001100100', 'A': '100001001', 'B': '001001001',
+    'C': '101001000', 'D': '000011001', 'E': '100011000', 'F': '001011000',
+    'G': '000001101', 'H': '100001100', 'I': '001001100', 'J': '000011100',
+    'K': '100000011', 'L': '001000011', 'M': '101000010', 'N': '000010011',
+    'O': '100010010', 'P': '001010010', 'Q': '000000111', 'R': '100000110',
+    'S': '001000110', 'T': '000010110', 'U': '110000001', 'V': '011000001',
+    'W': '111000000', 'X': '010010001', 'Y': '110010000', 'Z': '011010000',
+    '-': '010000101', '.': '110000100', ' ': '011000100', '$': '010101000',
+    '/': '010100010', '+': '010001010', '%': '000101010', '*': '010010100'
+  };
+
+  // Interleaved 2 of 5: five elements per digit, two of them wide.
+  var ITF = ['00110', '10001', '01001', '11000', '00101',
+             '10100', '01100', '00011', '10010', '01010'];
+
+  /* ------------------------------------------------------------- helpers */
+
+  function modules(widths, wide) {
+    // Turn a list of 0/1 flags into modules, alternating bar and space.
+    var out = '';
+    for (var i = 0; i < widths.length; i++) {
+      out += (i % 2 === 0 ? '1' : '0').repeat(widths[i] ? wide : 1);
+    }
+    return out;
+  }
+
+  function widths(str) {
+    // Turn a width pattern such as "212222" into modules, bar first.
+    var out = '', bar = '1';
+    for (var i = 0; i < str.length; i++) {
+      out += bar.repeat(+str.charAt(i));
+      bar = bar === '1' ? '0' : '1';
+    }
+    return out;
+  }
+
+  function digitsOnly(raw) {
+    return String(raw == null ? '' : raw).replace(/[\s-]/g, '');
+  }
+
+  function checkDigit(body) {
+    // Modulo 10, weights 3 and 1 from the right. Same rule for EAN, UPC, GTIN.
+    var sum = 0, weight = 3;
+    for (var i = body.length - 1; i >= 0; i--) {
+      sum += (+body.charAt(i)) * weight;
+      weight = weight === 3 ? 1 : 3;
+    }
+    return (10 - (sum % 10)) % 10;
+  }
+
+  /* ---------------------------------------------------------- symbologies */
+
+  function ean13(raw) {
+    var v = digitsOnly(raw);
+    if (!/^\d{12,13}$/.test(v)) {
+      return { ok: false, error: 'wrongLength', want: 13 };
+    }
+    var body = v.slice(0, 12);
+    var check = checkDigit(body);
+    var notes = [];
+    if (v.length === 13 && +v.charAt(12) !== check) {
+      notes.push({ kind: 'checkFixed', from: v.charAt(12), to: String(check) });
+      v = body + check;
+    } else if (v.length === 12) {
+      v = body + check;
+    }
+    var parity = PARITY[+v.charAt(0)];
+    var bits = '101';
+    for (var i = 0; i < 6; i++) {
+      var d = +v.charAt(i + 1);
+      bits += parity.charAt(i) === 'L' ? L[d] : G[d];
+    }
+    bits += '01010';
+    for (var j = 0; j < 6; j++) bits += R[+v.charAt(j + 7)];
+    bits += '101';
+    return { ok: true, bits: bits, text: v, value: v, notes: notes };
+  }
+
+  function ean8(raw) {
+    var v = digitsOnly(raw);
+    if (!/^\d{7,8}$/.test(v)) return { ok: false, error: 'wrongLength', want: 8 };
+    var body = v.slice(0, 7);
+    var check = checkDigit(body);
+    var notes = [];
+    if (v.length === 8 && +v.charAt(7) !== check) {
+      notes.push({ kind: 'checkFixed', from: v.charAt(7), to: String(check) });
+      v = body + check;
+    } else if (v.length === 7) {
+      v = body + check;
+    }
+    var bits = '101';
+    for (var i = 0; i < 4; i++) bits += L[+v.charAt(i)];
+    bits += '01010';
+    for (var j = 0; j < 4; j++) bits += R[+v.charAt(j + 4)];
+    bits += '101';
+    return { ok: true, bits: bits, text: v, value: v, notes: notes };
+  }
+
+  function upca(raw) {
+    var v = digitsOnly(raw);
+    if (!/^\d{11,12}$/.test(v)) return { ok: false, error: 'wrongLength', want: 12 };
+    var body = v.slice(0, 11);
+    var check = checkDigit(body);
+    var notes = [];
+    if (v.length === 12 && +v.charAt(11) !== check) {
+      notes.push({ kind: 'checkFixed', from: v.charAt(11), to: String(check) });
+      v = body + check;
+    } else if (v.length === 11) {
+      v = body + check;
+    }
+    var bits = '101';
+    for (var i = 0; i < 6; i++) bits += L[+v.charAt(i)];
+    bits += '01010';
+    for (var j = 0; j < 6; j++) bits += R[+v.charAt(j + 6)];
+    bits += '101';
+    return { ok: true, bits: bits, text: v, value: v, notes: notes };
+  }
+
+  function code128(raw) {
+    var v = String(raw == null ? '' : raw);
+    if (!v.length) return { ok: false, error: 'empty' };
+    if (v.length > 48) return { ok: false, error: 'tooLong', max: 48 };
+
+    var values = [], start, i;
+    var numeric = /^\d+$/.test(v) && v.length % 2 === 0 && v.length >= 2;
+
+    if (numeric) {
+      start = START_C;
+      for (i = 0; i < v.length; i += 2) values.push(+v.substr(i, 2));
+    } else {
+      start = START_B;
+      for (i = 0; i < v.length; i++) {
+        var code = v.charCodeAt(i);
+        if (code < 32 || code > 126) return { ok: false, error: 'badChar', at: v.charAt(i) };
+        values.push(code - 32);
+      }
+    }
+
+    var sum = start;
+    for (i = 0; i < values.length; i++) sum += values[i] * (i + 1);
+    var check = sum % 103;
+
+    var bits = widths(C128[start]);
+    for (i = 0; i < values.length; i++) bits += widths(C128[values[i]]);
+    bits += widths(C128[check]);
+    bits += widths(C128[STOP]);
+
+    return { ok: true, bits: bits, text: v, value: v, notes: [], checksum: check };
+  }
+
+  function code39(raw) {
+    var v = String(raw == null ? '' : raw).toUpperCase();
+    if (!v.length) return { ok: false, error: 'empty' };
+    if (v.length > 40) return { ok: false, error: 'tooLong', max: 40 };
+    for (var i = 0; i < v.length; i++) {
+      if (!Object.prototype.hasOwnProperty.call(C39, v.charAt(i)) || v.charAt(i) === '*') {
+        return { ok: false, error: 'badChar', at: v.charAt(i) };
+      }
+    }
+    var notes = [];
+    if (String(raw) !== v) notes.push({ kind: 'upperCased' });
+
+    var bits = '';
+    var chars = '*' + v + '*';
+    for (var j = 0; j < chars.length; j++) {
+      bits += modules(C39[chars.charAt(j)].split('').map(Number), 3) + '0';
+    }
+    return { ok: true, bits: bits.slice(0, -1), text: v, value: v, notes: notes };
+  }
+
+  function itf14(raw) {
+    var v = digitsOnly(raw);
+    if (!/^\d{13,14}$/.test(v)) return { ok: false, error: 'wrongLength', want: 14 };
+    var body = v.slice(0, 13);
+    var check = checkDigit(body);
+    var notes = [];
+    if (v.length === 14 && +v.charAt(13) !== check) {
+      notes.push({ kind: 'checkFixed', from: v.charAt(13), to: String(check) });
+      v = body + check;
+    } else if (v.length === 13) {
+      v = body + check;
+    }
+    var bits = '1010';
+    for (var i = 0; i < v.length; i += 2) {
+      var a = ITF[+v.charAt(i)], b = ITF[+v.charAt(i + 1)];
+      for (var k = 0; k < 5; k++) {
+        bits += (a.charAt(k) === '1' ? '111' : '1');
+        bits += (b.charAt(k) === '1' ? '000' : '0');
+      }
+    }
+    bits += '11101';
+    return { ok: true, bits: bits, text: v, value: v, notes: notes };
+  }
+
+  var TYPES = {
+    ean13: { encode: ean13, name: 'EAN-13', digits: 13, quiet: 11, sample: '4006381333931' },
+    ean8: { encode: ean8, name: 'EAN-8', digits: 8, quiet: 10, sample: '96385074' },
+    upca: { encode: upca, name: 'UPC-A', digits: 12, quiet: 9, sample: '012345678905' },
+    code128: { encode: code128, name: 'Code 128', quiet: 10, sample: 'SHIP-2026-0042' },
+    code39: { encode: code39, name: 'Code 39', quiet: 10, sample: 'ASSET 0042' },
+    itf14: { encode: itf14, name: 'ITF-14', digits: 14, quiet: 10, sample: '15400141234562' }
+  };
+
+  function encode(type, raw) {
+    var spec = TYPES[type];
+    if (!spec) return { ok: false, error: 'unknownType' };
+    var result = spec.encode(raw);
+    if (result.ok) {
+      result.type = type;
+      result.name = spec.name;
+      result.quiet = spec.quiet;
+      result.digits = spec.digits || null;
+    }
+    return result;
+  }
+
+  return {
+    TYPES: TYPES,
+    list: Object.keys(TYPES),
+    encode: encode,
+    checkDigit: checkDigit,
+    digitsOnly: digitsOnly
+  };
+}));
+</script>
+<script>
+/* Generated by build.py from src/i18n/locales.json. Do not edit. */
+window.TD_LOCALES = {
+  "en": {"about1Body": "The bars are computed and drawn by this page. No server sees your product codes, and the tool keeps working with the network off.", "about1Title": "Nothing leaves the tab", "about2Body": "SVG for a printer, PNG at 300 dpi for a screen. Both keep the module width you asked for, so a scanner reads them at the size you print.", "about2Title": "Vector first", "about3Body": "Paste a list and print a page of labels with the numbers under each code. Retail units, cartons, shelves and assets, all on one sheet.", "about3Title": "Sheets, not one at a time", "aboutTitle": "Why this one is different", "barHeight": "Height, mm", "barWidth": "Bar width, mm", "codesLabel": "Codes, one per line", "codesPlaceholder": "4006381333931", "downloadAll": "All as ZIP", "downloadPng": "PNG", "downloadSvg": "SVG", "errBadChar": "The character {char} cannot be encoded here.", "errEmpty": "Type a code first.", "errTooLong": "Too long, the limit is {max} characters.", "errWrongLength": "Needs {want} digits.", "footerFree": "Free, no account, no tracking.", "gap": "Gap, mm", "h1": "Barcodes that print clean and never phone home", "hintCode128": "Letters, digits and punctuation. A code made only of digits is packed two at a time, which makes it shorter.", "hintCode39": "Capital letters, digits, space, and the signs - . $ / + %", "hintEan13": "13 digits, or 12 and the check digit is added for you.", "hintEan8": "8 digits, or 7 and the check digit is added for you.", "hintItf14": "14 digits for a carton, or 13 and the check digit is added for you.", "hintUpca": "12 digits, or 11 and the check digit is added for you.", "labelHeight": "Label height, mm", "labelWidth": "Label width, mm", "language": "Language", "lede": "Type or paste your codes, pick the symbology, and take vector SVG, a sharp PNG, or a full sheet of labels. Everything is drawn in this tab, so nothing is uploaded and the page keeps working with the internet off.", "linePrefix": "Line {n}:", "noteCheck": "The check digit was wrong and has been corrected from {from} to {to}.", "noteUpper": "Lower case was changed to capitals.", "printNote": "Print at 100 percent scale, with fit to page switched off, or the bars will not measure right.", "printSheet": "Print sheet", "sheetHint": "A4 page, as many labels per row as fit. The bars scale down to the label.", "sheetSummary": "Sheet of labels", "showText": "Print the numbers under the bars", "skip": "Skip to content", "statusMany": "{n} codes ready.", "statusOne": "{n} code ready.", "textSize": "Text, pt", "theme": "Switch theme", "typeLegend": "Symbology"},
+  "ro": {"about1Body": "Barele se calculează și se desenează în pagină. Niciun server nu vede codurile tale, iar unealta merge cu rețeaua oprită.", "about1Title": "Nimic nu pleacă din tab", "about2Body": "SVG pentru tipar, PNG la 300 dpi pentru ecran. Amândouă păstrează lățimea barei cerută, deci scannerul citește la dimensiunea tipărită.", "about2Title": "Vectorial, în primul rând", "about3Body": "Lipești o listă și tipărești o pagină de etichete cu cifrele sub fiecare cod. Produse, baxuri, rafturi și bunuri, toate pe o foaie.", "about3Title": "Foi întregi, nu bucată cu bucată", "aboutTitle": "De ce e altfel", "barHeight": "Înălțime, mm", "barWidth": "Lățime bară, mm", "codesLabel": "Coduri, unul pe linie", "codesPlaceholder": "4006381333931", "downloadAll": "Toate în ZIP", "downloadPng": "PNG", "downloadSvg": "SVG", "errBadChar": "Caracterul {char} nu poate fi codat aici.", "errEmpty": "Scrie întâi un cod.", "errTooLong": "Prea lung, limita este {max} caractere.", "errWrongLength": "Trebuie {want} cifre.", "footerFree": "Gratuit, fără cont, fără urmărire.", "gap": "Spațiu, mm", "h1": "Coduri de bare care se tipăresc curat și nu sună nicăieri", "hintCode128": "Litere, cifre și semne. Un cod doar din cifre se împachetează câte două, deci iese mai scurt.", "hintCode39": "Litere mari, cifre, spațiu și semnele - . $ / + %", "hintEan13": "13 cifre, sau 12 și cifra de control se adaugă singură.", "hintEan8": "8 cifre, sau 7 și cifra de control se adaugă singură.", "hintItf14": "14 cifre pentru un bax, sau 13 și cifra de control se adaugă singură.", "hintUpca": "12 cifre, sau 11 și cifra de control se adaugă singură.", "labelHeight": "Înălțime etichetă, mm", "labelWidth": "Lățime etichetă, mm", "language": "Limba", "lede": "Scrii sau lipești codurile, alegi simbologia și iei SVG vectorial, PNG la rezoluție mare sau o foaie întreagă de etichete. Totul se desenează în acest tab, deci nimic nu se încarcă și pagina merge și cu internetul oprit.", "linePrefix": "Linia {n}:", "noteCheck": "Cifra de control era greșită și a fost corectată din {from} în {to}.", "noteUpper": "Literele mici au fost schimbate în mari.", "printNote": "Tipărește la 100 la sută, cu potrivirea la pagină oprită, altfel barele nu mai ies la dimensiunea cerută.", "printSheet": "Tipărește foaia", "sheetHint": "Pagină A4, atâtea etichete pe rând câte încap. Barele se micșorează până la etichetă.", "sheetSummary": "Foaie de etichete", "showText": "Tipărește cifrele sub bare", "skip": "Sari la conținut", "statusMany": "{n} coduri gata.", "statusOne": "{n} cod gata.", "textSize": "Text, pt", "theme": "Schimbă tema", "typeLegend": "Simbologie"},
+  "sr-latn": {"about1Body": "Crte se računaju i crtaju u stranici. Nijedan server ne vidi tvoje kodove, a alat radi i sa isključenom mrežom.", "about1Title": "Ništa ne izlazi iz taba", "about2Body": "SVG za štampu, PNG na 300 dpi za ekran. Oba zadržavaju traženu širinu crte, pa skener čita ono što je odštampano.", "about2Title": "Prvo vektorski", "about3Body": "Nalepi spisak i odštampaj stranu etiketa sa ciframa ispod svakog koda. Proizvodi, kutije, police i oprema, sve na jednom listu.", "about3Title": "Ceo list, ne jedna po jedna", "aboutTitle": "Zašto je ovaj drugačiji", "barHeight": "Visina, mm", "barWidth": "Širina crte, mm", "codesLabel": "Kodovi, jedan po redu", "codesPlaceholder": "4006381333931", "downloadAll": "Sve u ZIP", "downloadPng": "PNG", "downloadSvg": "SVG", "errBadChar": "Znak {char} ne može da se kodira ovde.", "errEmpty": "Prvo ukucaj kod.", "errTooLong": "Predugačko, granica je {max} znakova.", "errWrongLength": "Treba {want} cifara.", "footerFree": "Besplatno, bez naloga, bez praćenja.", "gap": "Razmak, mm", "h1": "Barkodovi koji se čisto štampaju i nikome ne javljaju", "hintCode128": "Slova, cifre i znaci. Kod samo od cifara pakuje se po dve, pa ispadne kraći.", "hintCode39": "Velika slova, cifre, razmak i znaci - . $ / + %", "hintEan13": "13 cifara, ili 12 pa se kontrolna cifra dodaje sama.", "hintEan8": "8 cifara, ili 7 pa se kontrolna cifra dodaje sama.", "hintItf14": "14 cifara za kartonsku kutiju, ili 13 pa se kontrolna cifra dodaje sama.", "hintUpca": "12 cifara, ili 11 pa se kontrolna cifra dodaje sama.", "labelHeight": "Visina etikete, mm", "labelWidth": "Širina etikete, mm", "language": "Jezik", "lede": "Ukucaj ili nalepi kodove, izaberi simbologiju i uzmi vektorski SVG, oštar PNG ili ceo list etiketa. Sve se crta u ovom tabu, pa se ništa ne šalje i stranica radi i bez interneta.", "linePrefix": "Red {n}:", "noteCheck": "Kontrolna cifra je bila pogrešna i ispravljena je iz {from} u {to}.", "noteUpper": "Mala slova su promenjena u velika.", "printNote": "Štampaj na 100 posto, sa isključenim uklapanjem u stranu, inače crte neće biti prave mere.", "printSheet": "Štampaj list", "sheetHint": "A4 strana, koliko etiketa po redu stane. Crte se smanjuju do etikete.", "sheetSummary": "List etiketa", "showText": "Štampaj cifre ispod crta", "skip": "Preskoči na sadržaj", "statusMany": "{n} kodova spremno.", "statusOne": "{n} kod spreman.", "textSize": "Tekst, pt", "theme": "Promeni temu", "typeLegend": "Simbologija"},
+  "sr-cyrl": {"about1Body": "Црте се рачунају и цртају у страници. Ниједан сервер не види твоје кодове, а алат ради и са искљученом мрежом.", "about1Title": "Ништа не излази из таба", "about2Body": "SVG за штампу, PNG на 300 dpi за екран. Оба задржавају тражену ширину црте, па скенер чита оно што је одштампано.", "about2Title": "Прво векторски", "about3Body": "Налепи списак и одштампај страну етикета са цифрама испод сваког кода. Производи, кутије, полице и опрема, све на једном листу.", "about3Title": "Цео лист, не једна по једна", "aboutTitle": "Зашто је овај другачији", "barHeight": "Висина, мм", "barWidth": "Ширина црте, мм", "codesLabel": "Кодови, један по реду", "codesPlaceholder": "4006381333931", "downloadAll": "Све у ZIP", "downloadPng": "PNG", "downloadSvg": "SVG", "errBadChar": "Знак {char} не може да се кодира овде.", "errEmpty": "Прво укуцај код.", "errTooLong": "Предугачко, граница је {max} знакова.", "errWrongLength": "Треба {want} цифара.", "footerFree": "Бесплатно, без налога, без праћења.", "gap": "Размак, мм", "h1": "Баркодови који се чисто штампају и никоме не јављају", "hintCode128": "Слова, цифре и знаци. Код само од цифара пакује се по две, па испадне краћи.", "hintCode39": "Велика слова, цифре, размак и знаци - . $ / + %", "hintEan13": "13 цифара, или 12 па се контролна цифра додаје сама.", "hintEan8": "8 цифара, или 7 па се контролна цифра додаје сама.", "hintItf14": "14 цифара за картонску кутију, или 13 па се контролна цифра додаје сама.", "hintUpca": "12 цифара, или 11 па се контролна цифра додаје сама.", "labelHeight": "Висина етикете, мм", "labelWidth": "Ширина етикете, мм", "language": "Језик", "lede": "Укуцај или налепи кодове, изабери симбологију и узми векторски SVG, оштар PNG или цео лист етикета. Све се црта у овом табу, па се ништа не шаље и страница ради и без интернета.", "linePrefix": "Ред {n}:", "noteCheck": "Контролна цифра је била погрешна и исправљена је из {from} у {to}.", "noteUpper": "Мала слова су промењена у велика.", "printNote": "Штампај на 100 посто, са искљученим уклапањем у страну, иначе црте неће бити праве мере.", "printSheet": "Штампај лист", "sheetHint": "A4 страна, колико етикета по реду стане. Црте се смањују до етикете.", "sheetSummary": "Лист етикета", "showText": "Штампај цифре испод црта", "skip": "Прескочи на садржај", "statusMany": "{n} кодова спремно.", "statusOne": "{n} код спреман.", "textSize": "Текст, пт", "theme": "Промени тему", "typeLegend": "Симбологија"}
+};
+</script>
+<script>
+/* Barcode Generator - TekiDeki
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * The page. It reads the typed codes, asks barcode.js for the modules, then
+ * draws them as SVG. The same svg string feeds the screen preview, the file
+ * download and the print sheet, so what you see is what gets printed.
+ */
+(function () {
+  'use strict';
+
+  var B = window.Barcode;
+
+  /* ------------------------------------------------------------- language */
+
+  var LOCALES = window.TD_LOCALES || { en: {} };
+  var lang = 'en';
+
+  function t(key, vars) {
+    var table = LOCALES[lang] || LOCALES.en || {};
+    var value = table[key] || (LOCALES.en || {})[key] || key;
+    if (vars) {
+      Object.keys(vars).forEach(function (name) {
+        value = value.replace('{' + name + '}', String(vars[name]));
+      });
+    }
+    return value;
+  }
+
+  function applyLanguage(next, remember) {
+    lang = LOCALES[next] ? next : 'en';
+    document.documentElement.lang = lang;
+    document.querySelectorAll('[data-i18n]').forEach(function (el) {
+      el.textContent = t(el.getAttribute('data-i18n'));
+    });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(function (el) {
+      el.setAttribute('placeholder', t(el.getAttribute('data-i18n-placeholder')));
+    });
+    document.querySelectorAll('[data-i18n-aria-label]').forEach(function (el) {
+      el.setAttribute('aria-label', t(el.getAttribute('data-i18n-aria-label')));
+    });
+    document.getElementById('lang').value = lang;
+    if (remember) store('lang', lang);
+    render();
+  }
+
+  /* ---------------------------------------------------------------- store */
+
+  function store(key, value) {
+    try { localStorage.setItem('barcode-generator.' + key, value); } catch (e) { /* private mode */ }
+  }
+  function load(key, fallback) {
+    try {
+      var value = localStorage.getItem('barcode-generator.' + key);
+      return value === null ? fallback : value;
+    } catch (e) { return fallback; }
+  }
+
+  /* ----------------------------------------------------------------- state */
+
+  var state = {
+    type: load('type', 'ean13'),
+    codes: load('codes', '4006381333931'),
+    module: parseFloat(load('module', '0.33')),
+    height: parseFloat(load('height', '18')),
+    textsize: parseFloat(load('textsize', '9')),
+    showtext: load('showtext', '1') === '1',
+    labelw: parseFloat(load('labelw', '63.5')),
+    labelh: parseFloat(load('labelh', '30')),
+    gap: parseFloat(load('gap', '3'))
+  };
+  if (!B.TYPES[state.type]) state.type = 'ean13';
+
+  var HINTS = {
+    ean13: 'hintEan13', ean8: 'hintEan8', upca: 'hintUpca',
+    code128: 'hintCode128', code39: 'hintCode39', itf14: 'hintItf14'
+  };
+
+  /* ------------------------------------------------------------- drawing */
+
+  // One svg, in millimetres, with the bars as a single path of rectangles.
+  function buildSvg(result, opts) {
+    var pad = (result.quiet || 10) * opts.module;
+    var barsW = result.bits.length * opts.module;
+    var textMm = opts.showtext ? opts.textsize * 0.3528 : 0;
+    var gapMm = opts.showtext ? 1.1 : 0;
+    var wmm = barsW + pad * 2;
+    var hmm = opts.height + textMm + gapMm;
+
+    var path = [];
+    var run = 0;
+    for (var i = 0; i <= result.bits.length; i++) {
+      if (result.bits.charAt(i) === '1') {
+        run++;
+      } else if (run) {
+        path.push('M' + fmt(pad + (i - run) * opts.module) + ' 0h' +
+          fmt(run * opts.module) + 'V' + fmt(opts.height) + 'H' +
+          fmt(pad + (i - run) * opts.module) + 'Z');
+        run = 0;
+      }
+    }
+
+    var label = opts.showtext
+      ? '<text x="' + fmt(wmm / 2) + '" y="' + fmt(opts.height + gapMm + textMm * 0.78) +
+        '" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="' +
+        fmt(textMm) + '" fill="#000">' + escapeXml(result.text) + '</text>'
+      : '';
+
+    return {
+      wmm: wmm,
+      hmm: hmm,
+      markup:
+        '<svg xmlns="http://www.w3.org/2000/svg" width="' + fmt(wmm) + 'mm" height="' + fmt(hmm) +
+        'mm" viewBox="0 0 ' + fmt(wmm) + ' ' + fmt(hmm) + '" role="img" aria-label="' +
+        escapeXml(result.name + ' ' + result.text) + '">' +
+        '<rect width="' + fmt(wmm) + '" height="' + fmt(hmm) + '" fill="#fff"/>' +
+        '<path fill="#000" d="' + path.join('') + '"/>' + label + '</svg>'
+    };
+  }
+
+  function fmt(value) {
+    return (Math.round(value * 1000) / 1000).toString();
+  }
+
+  function escapeXml(text) {
+    return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function options() {
+    return {
+      module: clamp(state.module, 0.15, 1.5),
+      height: clamp(state.height, 4, 90),
+      textsize: clamp(state.textsize, 3, 24),
+      showtext: state.showtext
+    };
+  }
+
+  function clamp(value, low, high) {
+    if (!isFinite(value)) return low;
+    return Math.min(high, Math.max(low, value));
+  }
+
+  /* -------------------------------------------------------------- parsing */
+
+  function analyse() {
+    var lines = state.codes.split('\n')
+      .map(function (line) { return line.trim(); })
+      .filter(function (line) { return line.length > 0; });
+    if (!lines.length) lines = [''];
+
+    var good = [], bad = [];
+    lines.forEach(function (line, index) {
+      if (!line) return;
+      var result = B.encode(state.type, line);
+      if (result.ok) {
+        result.input = line;
+        good.push(result);
+      } else {
+        bad.push({ line: index + 1, input: line, error: result });
+      }
+    });
+    return { good: good, bad: bad };
+  }
+
+  function describeBad(item) {
+    var error = item.error || {};
+    var message;
+    if (error.error === 'wrongLength') message = t('errWrongLength', { want: error.want });
+    else if (error.error === 'badChar') message = t('errBadChar', { char: error.at || '?' });
+    else if (error.error === 'tooLong') message = t('errTooLong', { max: error.max });
+    else if (error.error === 'empty') message = t('errEmpty');
+    else message = t('errEmpty');
+    return t('linePrefix', { n: item.line }) + ' ' + message;
+  }
+
+  /* --------------------------------------------------------------- render */
+
+  var box = document.getElementById('svgbox');
+  var caption = document.getElementById('caption');
+  var statusEl = document.getElementById('status');
+  var buttons = ['btn-svg', 'btn-png', 'btn-zip', 'btn-print'].map(function (id) {
+    return document.getElementById(id);
+  });
+
+  var current = { good: [], bad: [] };
+
+  function render() {
+    var found = analyse();
+    current = found;
+    var first = found.good[0];
+
+    document.getElementById('hint').textContent = t(HINTS[state.type] || 'hintEan13');
+
+    if (first) {
+      var drawing = buildSvg(first, options());
+      box.innerHTML = drawing.markup;
+      var notes = [];
+      (first.notes || []).forEach(function (note) {
+        if (note.kind === 'checkFixed') notes.push(t('noteCheck', { from: note.from, to: note.to }));
+        if (note.kind === 'upperCased') notes.push(t('noteUpper'));
+      });
+      caption.textContent = first.name + ' · ' + first.text + ' · ' + drawing.wmm.toFixed(1) + ' x ' + drawing.hmm.toFixed(1) + ' mm' + (notes.length ? ' · ' + notes.join(' ') : '');
+    } else {
+      box.innerHTML = '';
+      caption.textContent = '';
+    }
+
+    var lines = [];
+    if (found.good.length === 1) lines.push(t('statusOne', { n: 1 }));
+    else if (found.good.length > 1) lines.push(t('statusMany', { n: found.good.length }));
+    found.bad.slice(0, 3).forEach(function (item) { lines.push(describeBad(item)); });
+    statusEl.textContent = lines.join(' · ') || t('errEmpty');
+    statusEl.className = 'status' + (found.bad.length ? ' bad' : '');
+
+    var usable = found.good.length > 0;
+    buttons.forEach(function (button) { button.disabled = !usable; });
+    document.getElementById('btn-zip').disabled = found.good.length < 2;
+
+    store('codes', state.codes);
+    store('type', state.type);
+  }
+
+  /* -------------------------------------------------------------- exports */
+
+  function download(blob, name) {
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+  }
+
+  function safeName(result) {
+    return String(result.text).replace(/[^A-Za-z0-9._-]+/g, '-').slice(0, 60) || 'barcode';
+  }
+
+  function svgFile(result) {
+    var drawing = buildSvg(result, options());
+    return {
+      name: safeName(result) + '.svg',
+      text: '<?xml version="1.0" encoding="UTF-8"?>\n' + drawing.markup
+    };
+  }
+
+  function pngBlob(result, dpi, done) {
+    var drawing = buildSvg(result, options());
+    var scale = dpi / 25.4;
+    var canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(drawing.wmm * scale));
+    canvas.height = Math.max(1, Math.round(drawing.hmm * scale));
+    var ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#000';
+
+    // Draw from the module string, not from the svg, so the edges stay crisp.
+    var opts = options();
+    var pad = (result.quiet || 10) * opts.module;
+    var px = opts.module * scale;
+    var run = 0;
+    for (var i = 0; i <= result.bits.length; i++) {
+      if (result.bits.charAt(i) === '1') {
+        run++;
+      } else if (run) {
+        var x = Math.round((pad + (i - run) * opts.module) * scale);
+        var w = Math.max(1, Math.round(run * px));
+        ctx.fillRect(x, 0, w, Math.round(opts.height * scale));
+        run = 0;
+      }
+    }
+    if (opts.showtext) {
+      var size = opts.textsize * 0.3528 * scale;
+      ctx.font = '600 ' + size + 'px ui-monospace, Menlo, Consolas, monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillText(result.text, canvas.width / 2, opts.height * scale + size * 0.95);
+    }
+    canvas.toBlob(function (blob) { done(blob); }, 'image/png');
+  }
+
+  document.getElementById('btn-svg').addEventListener('click', function () {
+    var result = current.good[0];
+    if (!result) return;
+    var file = svgFile(result);
+    download(new Blob([file.text], { type: 'image/svg+xml' }), file.name);
+  });
+
+  document.getElementById('btn-png').addEventListener('click', function () {
+    var result = current.good[0];
+    if (!result) return;
+    pngBlob(result, 300, function (blob) {
+      if (blob) download(blob, safeName(result) + '-300dpi.png');
+    });
+  });
+
+  document.getElementById('btn-zip').addEventListener('click', function () {
+    if (current.good.length < 2) return;
+    var files = current.good.map(svgFile);
+    var blob = zip(files);
+    download(blob, 'barcodes-' + current.good.length + '.zip');
+  });
+
+  /* ------------------------------------------------------------------ zip */
+  // Store only, no compression: svg text is small and deflate would add code.
+
+  var CRC_TABLE = (function () {
+    var table = new Uint32Array(256);
+    for (var n = 0; n < 256; n++) {
+      var c = n;
+      for (var k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+      table[n] = c >>> 0;
+    }
+    return table;
+  }());
+
+  function crc32(bytes) {
+    var c = 0xFFFFFFFF;
+    for (var i = 0; i < bytes.length; i++) c = CRC_TABLE[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
+    return (c ^ 0xFFFFFFFF) >>> 0;
+  }
+
+  function dosTime(date) {
+    var time = ((date.getHours() << 11) | (date.getMinutes() << 5) | (date.getSeconds() >> 1)) & 0xFFFF;
+    var day = (((date.getFullYear() - 1980) << 9) | ((date.getMonth() + 1) << 5) | date.getDate()) & 0xFFFF;
+    return { time: time, date: day };
+  }
+
+  function zip(files) {
+    var encoder = new TextEncoder();
+    var chunks = [], central = [], offset = 0;
+    var stamp = dosTime(new Date());
+
+    files.forEach(function (file) {
+      var nameBytes = encoder.encode(file.name);
+      var data = encoder.encode(file.text);
+      var crc = crc32(data);
+
+      var local = new Uint8Array(30 + nameBytes.length);
+      var view = new DataView(local.buffer);
+      view.setUint32(0, 0x04034b50, true);
+      view.setUint16(4, 20, true);
+      view.setUint16(6, 0, true);
+      view.setUint16(8, 0, true);
+      view.setUint16(10, stamp.time, true);
+      view.setUint16(12, stamp.date, true);
+      view.setUint32(14, crc, true);
+      view.setUint32(18, data.length, true);
+      view.setUint32(22, data.length, true);
+      view.setUint16(26, nameBytes.length, true);
+      local.set(nameBytes, 30);
+
+      chunks.push(local, data);
+
+      var dir = new Uint8Array(46 + nameBytes.length);
+      var dview = new DataView(dir.buffer);
+      dview.setUint32(0, 0x02014b50, true);
+      dview.setUint16(4, 20, true);
+      dview.setUint16(6, 20, true);
+      dview.setUint16(8, 0, true);
+      dview.setUint16(10, 0, true);
+      dview.setUint16(12, stamp.time, true);
+      dview.setUint16(14, stamp.date, true);
+      dview.setUint32(16, crc, true);
+      dview.setUint32(20, data.length, true);
+      dview.setUint32(24, data.length, true);
+      dview.setUint16(28, nameBytes.length, true);
+      dview.setUint32(42, offset, true);
+      dir.set(nameBytes, 46);
+      central.push(dir);
+
+      offset += local.length + data.length;
+    });
+
+    var centralSize = central.reduce(function (sum, part) { return sum + part.length; }, 0);
+    var end = new Uint8Array(22);
+    var eview = new DataView(end.buffer);
+    eview.setUint32(0, 0x06054b50, true);
+    eview.setUint16(8, files.length, true);
+    eview.setUint16(10, files.length, true);
+    eview.setUint32(12, centralSize, true);
+    eview.setUint32(16, offset, true);
+
+    return new Blob(chunks.concat(central, [end]), { type: 'application/zip' });
+  }
+
+  /* ---------------------------------------------------------------- print */
+
+  document.getElementById('btn-print').addEventListener('click', function () {
+    if (!current.good.length) return;
+    var sheet = document.getElementById('sheet') || (function () {
+      var node = document.createElement('div');
+      node.id = 'sheet';
+      document.body.appendChild(node);
+      return node;
+    }());
+
+    var gap = clamp(state.gap, 0, 20);
+    var labelW = clamp(state.labelw, 20, 190);
+    var labelH = clamp(state.labelh, 12, 120);
+    var usable = 190; // A4 width minus the 10 mm margins set in the stylesheet
+    var columns = Math.max(1, Math.floor((usable + gap) / (labelW + gap)));
+
+    sheet.style.gridTemplateColumns = 'repeat(' + columns + ', ' + labelW + 'mm)';
+    sheet.style.gap = gap + 'mm';
+
+    var inner = Math.max(10, labelW - 4);
+    sheet.innerHTML = current.good.map(function (result) {
+      var drawing = buildSvg(result, {
+        module: clamp(inner / (result.bits.length + (result.quiet || 10) * 2), 0.12, 1.2),
+        height: Math.max(5, labelH - 10),
+        textsize: clamp(state.textsize * 0.9, 3, 18),
+        showtext: true
+      });
+      return '<div class="label" style="width:' + labelW + 'mm;height:' + labelH + 'mm">' +
+        drawing.markup + '</div>';
+    }).join('');
+
+    window.print();
+  });
+
+  /* ----------------------------------------------------------------- wire */
+
+  document.getElementById('types').addEventListener('click', function (event) {
+    var chip = event.target.closest('.chip');
+    if (!chip) return;
+    state.type = chip.getAttribute('data-type');
+    document.querySelectorAll('.chip').forEach(function (el) {
+      el.classList.toggle('on', el === chip);
+    });
+    var sample = B.TYPES[state.type].sample;
+    if (!state.codes.trim()) {
+      state.codes = sample;
+      document.getElementById('codes').value = sample;
+    }
+    render();
+  });
+
+  var codes = document.getElementById('codes');
+  codes.value = state.codes;
+  codes.addEventListener('input', function () {
+    state.codes = codes.value;
+    render();
+  });
+
+  function bindNumber(id, key, min, max) {
+    var input = document.getElementById(id);
+    input.value = String(state[key]);
+    input.addEventListener('input', function () {
+      var value = parseFloat(input.value);
+      if (!isFinite(value)) return;
+      state[key] = clamp(value, min, max);
+      store(key, state[key]);
+      render();
+    });
+  }
+  bindNumber('module', 'module', 0.15, 1.5);
+  bindNumber('height', 'height', 4, 90);
+  bindNumber('textsize', 'textsize', 3, 24);
+  bindNumber('labelw', 'labelw', 20, 190);
+  bindNumber('labelh', 'labelh', 12, 120);
+  bindNumber('gap', 'gap', 0, 20);
+
+  var showtext = document.getElementById('showtext');
+  showtext.checked = state.showtext;
+  showtext.addEventListener('change', function () {
+    state.showtext = showtext.checked;
+    store('showtext', state.showtext ? '1' : '0');
+    render();
+  });
+
+  document.getElementById('theme').addEventListener('click', function () {
+    var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    store('theme', next);
+  });
+
+  document.getElementById('lang').addEventListener('change', function (event) {
+    applyLanguage(event.target.value, true);
+  });
+
+  /* ------------------------------------------------------------------ boot */
+
+  var start = load('lang', '');
+  if (!start) {
+    var guess = (navigator.language || 'en').toLowerCase();
+    start = guess.indexOf('ro') === 0 ? 'ro' : (guess.indexOf('sr') === 0 ? 'sr-latn' : 'en');
+  }
+  applyLanguage(start, false);
+
+  if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('sw.js').catch(function () { /* offline copy is a bonus */ });
+    });
+  }
+}());
+</script>
+<!-- Barcode Generator 1.0.0 · single file build -->
+</body>
+</html>

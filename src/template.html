@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#0f6674">
+<title>Barcode Generator · EAN, UPC, Code 128, printed in your browser</title>
+<meta name="description" content="Make EAN-13, EAN-8, UPC-A, ITF-14, Code 128 and Code 39 barcodes as vector SVG or sharp PNG, then print a whole sheet of labels. No account, no upload, works offline.">
+<meta name="author" content="Kristian Mario Miskovic (TekiDeki)">
+<meta name="robots" content="index, follow">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="favicon.ico" sizes="32x32">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="styles.css">
+<script>
+/* Paint the stored theme before the body exists, so a reload never flashes. */
+(function () {
+  try {
+    var saved = localStorage.getItem('barcode-generator.theme');
+    var dark = saved === 'dark' || (!saved && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+}());
+</script>
+</head>
+<body>
+
+<a class="skip" href="#main" data-i18n="skip">Skip to content</a>
+
+<header class="topbar">
+  <div class="wrap topbar-in">
+    <a class="brand" href="#main">
+      <span class="mark" aria-hidden="true"><svg viewBox="0 0 32 32"><rect x="3" y="4" width="3" height="24"/><rect x="8" y="4" width="1.6" height="24"/><rect x="12" y="4" width="4.6" height="24"/><rect x="19" y="4" width="1.6" height="24"/><rect x="23" y="4" width="2.6" height="24"/><rect x="27.4" y="4" width="1.6" height="24"/></svg></span>
+      <span class="brand-text">Barcode<span class="brand-dot">.</span>Generator</span>
+    </a>
+    <div class="tools">
+      <label class="sr" for="lang" data-i18n="language">Language</label>
+      <select id="lang" class="select">
+        <option value="en">EN</option>
+        <option value="ro">RO</option>
+        <option value="sr-latn">SR</option>
+        <option value="sr-cyrl">SR ћир</option>
+      </select>
+      <button id="theme" class="iconbtn" type="button" data-i18n-aria-label="theme" aria-label="Switch theme">
+        <svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.6v2.2M12 19.2v2.2M4.2 12H2M22 12h-2.2M6 6l1.6 1.6M16.4 16.4L18 18M18 6l-1.6 1.6M7.6 16.4L6 18"/></svg>
+        <svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.4A8.4 8.4 0 0 1 9.6 4a8.4 8.4 0 1 0 10.4 10.4z"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="main" class="wrap">
+
+  <section class="intro">
+    <h1 data-i18n="h1">Barcodes that print clean and never phone home</h1>
+    <p class="lede" data-i18n="lede">Type or paste your codes, pick the symbology, and take vector SVG, a sharp PNG, or a full sheet of labels. Everything is drawn in this tab, so nothing is uploaded and the page keeps working with the internet off.</p>
+  </section>
+
+  <div class="work">
+
+    <form class="panel" id="form" autocomplete="off">
+      <fieldset class="types">
+        <legend data-i18n="typeLegend">Symbology</legend>
+        <div class="chips" id="types">
+          <button type="button" class="chip on" data-type="ean13">EAN-13</button>
+          <button type="button" class="chip" data-type="ean8">EAN-8</button>
+          <button type="button" class="chip" data-type="upca">UPC-A</button>
+          <button type="button" class="chip" data-type="code128">Code 128</button>
+          <button type="button" class="chip" data-type="code39">Code 39</button>
+          <button type="button" class="chip" data-type="itf14">ITF-14</button>
+        </div>
+      </fieldset>
+
+      <label class="field">
+        <span data-i18n="codesLabel">Codes, one per line</span>
+        <textarea id="codes" rows="2" spellcheck="false" data-i18n-placeholder="codesPlaceholder" placeholder="4006381333931"></textarea>
+      </label>
+      <p class="hint" id="hint" data-i18n="hintEan13">13 digits. The last one is the check digit, and it is filled in for you when you type 12.</p>
+
+      <div class="row">
+        <label class="field small">
+          <span data-i18n="barWidth">Bar width, mm</span>
+          <input id="module" type="number" min="0.19" max="1" step="0.01" value="0.33">
+        </label>
+        <label class="field small">
+          <span data-i18n="barHeight">Height, mm</span>
+          <input id="height" type="number" min="5" max="80" step="1" value="18">
+        </label>
+        <label class="field small">
+          <span data-i18n="textSize">Text, pt</span>
+          <input id="textsize" type="number" min="4" max="20" step="0.5" value="9">
+        </label>
+      </div>
+
+      <label class="check"><input id="showtext" type="checkbox" checked> <span data-i18n="showText">Print the numbers under the bars</span></label>
+
+      <details class="sheet">
+        <summary data-i18n="sheetSummary">Sheet of labels</summary>
+        <div class="row">
+          <label class="field small">
+            <span data-i18n="labelWidth">Label width, mm</span>
+            <input id="labelw" type="number" min="20" max="190" step="1" value="63.5">
+          </label>
+          <label class="field small">
+            <span data-i18n="labelHeight">Label height, mm</span>
+            <input id="labelh" type="number" min="15" max="100" step="1" value="30">
+          </label>
+          <label class="field small">
+            <span data-i18n="gap">Gap, mm</span>
+            <input id="gap" type="number" min="0" max="20" step="0.5" value="3">
+          </label>
+        </div>
+        <p class="hint" id="sheetHint" data-i18n="sheetHint">A4 page, as many labels per row as fit. The bars scale to the label.</p>
+      </details>
+    </form>
+
+    <section class="preview" aria-live="polite">
+      <div class="paper">
+        <div id="svgbox" class="svgbox"></div>
+        <p class="caption" id="caption"></p>
+      </div>
+      <p class="status" id="status"></p>
+      <div class="actions">
+        <button id="btn-svg" class="btn" type="button" data-i18n="downloadSvg">SVG</button>
+        <button id="btn-png" class="btn" type="button" data-i18n="downloadPng">PNG</button>
+        <button id="btn-zip" class="btn" type="button" data-i18n="downloadAll">All as ZIP</button>
+        <button id="btn-print" class="btn primary" type="button" data-i18n="printSheet">Print sheet</button>
+      </div>
+      <p class="note" data-i18n="printNote">Print at 100% scale, with "fit to page" switched off, or the bars will not measure right.</p>
+    </section>
+  </div>
+
+  <section class="about">
+    <h2 data-i18n="aboutTitle">Why this one is different</h2>
+    <div class="about-grid">
+      <div>
+        <h3 data-i18n="about1Title">Nothing leaves the tab</h3>
+        <p data-i18n="about1Body">The bars are computed and drawn by this page. No server sees your product codes, and the tool keeps working with the network off.</p>
+      </div>
+      <div>
+        <h3 data-i18n="about2Title">Vector first</h3>
+        <p data-i18n="about2Body">SVG for a printer, PNG at 300 or 600 dpi for a screen. Both keep the module width you asked for, so a scanner reads them at the size you print.</p>
+      </div>
+      <div>
+        <h3 data-i18n="about3Title">Sheets, not one at a time</h3>
+        <p data-i18n="about3Body">Paste a list and print a page of labels with the numbers under each code. Retail units, cartons, shelves and assets, all on one sheet.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <p><span data-i18n="footerFree">Free, no account, no tracking.</span> <a href="https://freehtml.dev">freehtml.dev</a> · <a href="https://github.com/TekiDeki/Barcode-Generator">GitHub</a></p>
+  </div>
+</footer>
+
+<script src="barcode.js"></script>
+<script src="i18n/locales.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+Barcode Generator
+Copyright 2026 Kristian Mario Miskovic (TekiDeki)
+https://github.com/TekiDeki/Barcode-Generator
+
+No third party code is included. The encoders in src/barcode.js were written
+for this project from the published symbology specifications, and the test
+suite compares their output against JsBarcode 3.12.1 (MIT), which is a test
+dependency only and is not shipped.
