@@ -172,6 +172,18 @@ html[data-theme="dark"] .status.bad{color:#ff9b90}
 @media (prefers-reduced-motion:reduce){
   *{animation:none !important;transition:none !important}
 }
+
+
+
+  /* regula casei: tinte de atingere pe mobil */
+  @media (pointer: coarse), (max-width: 700px) {
+    .skip { min-height: 34px; display: inline-flex; align-items: center; }
+    .brand { min-height: 34px; display: inline-flex; align-items: center; }
+    .chip.on { min-height: 34px; display: inline-flex; align-items: center; }
+    .chip { min-height: 34px; display: inline-flex; align-items: center; }
+    label:has(#showtext), label[for="showtext"] { min-height: 34px; align-items: center; }
+    a { padding-block: 9px; }
+  }
 </style>
 <script>
 /* Paint the stored theme before the body exists, so a reload never flashes. */
