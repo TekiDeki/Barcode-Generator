@@ -184,6 +184,11 @@ html[data-theme="dark"] .status.bad{color:#ff9b90}
     label:has(#showtext), label[for="showtext"] { min-height: 34px; align-items: center; }
     a { padding-block: 9px; }
   }
+
+  /* regula casei: tinte de atingere pe mobil - titlul de acordeon se apasa */
+  @media (pointer: coarse), (max-width: 700px) {
+    summary { min-height: 34px; display: flex; align-items: center; }
+  }
 </style>
 <script>
 /* Paint the stored theme before the body exists, so a reload never flashes. */
