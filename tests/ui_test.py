@@ -153,6 +153,8 @@ def main() -> int:
         page.emulate_media(media="print")
         check("the sheet survives into the print stylesheet", page.locator("#sheet").is_visible())
         check("the app chrome steps aside when printing", not page.locator(".panel").is_visible())
+        check("install controls stay out of the printout", not page.locator("#td-install-section").is_visible()
+              and not page.locator("#td-install-dialog").is_visible())
         page.emulate_media(media="screen")
 
         # offline shell
